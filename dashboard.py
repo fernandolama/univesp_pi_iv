@@ -202,13 +202,41 @@ if "escolaridades_pais_selecionadas" not in st.session_state:
     st.session_state["escolaridades_pais_selecionadas"] = escolaridades_pais_reordenadas.copy()
 
 escolaridades_pais_selecionadas = st.sidebar.multiselect(
-    "Cor/raça",
+    "Escolaridade do pai",
     options=escolaridades_pais_reordenadas,
     key="escolaridades_pais_selecionadas"
 )
 
 if st.sidebar.button("🔄 Resetar escolaridades dos pais"):
     st.session_state.pop("escolaridades_pais_selecionadas")
+    st.rerun()
+
+# --- Filtro de escolaridade da mãe --- #
+escolaridades_maes_disponiveis = get_escolaridades_maes(df)
+
+# Reordenação
+ordem_esc = ["Nunca estudou",
+             "Fundamental I incompleto",
+             "Fundamental I completo, mas não Fundamental II",
+             "Fundamental II completo, mas não Médio",
+             "Médio completo",
+             "Superior completo",
+             "Pós-graduação",
+             "Não sei"]
+
+escolaridades_maes_reordenadas = [esc for esc in ordem_esc if esc in escolaridades_maes_disponiveis]
+
+if "escolaridades_maes_selecionadas" not in st.session_state:
+    st.session_state["escolaridades_maes_selecionadas"] = escolaridades_maes_reordenadas.copy()
+
+escolaridades_maes_selecionadas = st.sidebar.multiselect(
+    "Escolaridade da mãe",
+    options=escolaridades_maes_reordenadas,
+    key="escolaridades_maes_selecionadas"
+)
+
+if st.sidebar.button("🔄 Resetar escolaridades das mães"):
+    st.session_state.pop("escolaridades_maes_selecionadas")
     st.rerun()
 
 # --- Aplicando filtros no DataFrame --- #
@@ -219,7 +247,8 @@ df_filtrado = df[
     (df['faixa_etaria_labels'].isin(faixas_etarias_selecionadas)) &
     (df['estado_civil_labels'].isin(estados_civis_selecionados)) &
     (df['cor_raca_labels'].isin(cores_racas_selecionadas)) &
-    (df['escolaridade_pai_labels'].isin(escolaridades_pais_selecionadas))
+    (df['escolaridade_pai_labels'].isin(escolaridades_pais_selecionadas)) &
+    (df['escolaridade_mae_labels'].isin(escolaridades_maes_selecionadas))
 ]
 
 # --- Página principal --- #
