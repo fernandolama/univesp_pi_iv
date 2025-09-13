@@ -54,6 +54,14 @@ def get_escolaridades_pais(df: pd.DataFrame) -> List[str]:
 def get_escolaridades_maes(df: pd.DataFrame) -> List[str]:
     return sorted(df['escolaridade_mae_labels'].unique())
 
+@st.cache_data
+def get_rendas_familiares(df: pd.DataFrame) -> List[str]:
+    return sorted(df['renda_familiar_labels'].unique())
+
+@st.cache_data
+def get_tipos_escola(df: pd.DataFrame) -> List[str]:
+    return sorted(df['tipo_escola_em_labels'].unique())
+
 # --- Barra lateral (Filtros) --- #
 st.sidebar.header(":mag: --- Filtros --- :mag_right:")
 
@@ -239,6 +247,60 @@ if st.sidebar.button("🔄 Resetar escolaridades das mães"):
     st.session_state.pop("escolaridades_maes_selecionadas")
     st.rerun()
 
+# --- Filtro de renda familiar --- #
+rendas_familiares_disponiveis = get_rendas_familiares(df)
+
+# Reordenação
+ordem_rf = ["Nenhuma renda",
+            "Muito baixa (até 2 SM)",
+            "Baixa (2-4 SM)",
+            "Média-baixa (4-7 SM)",
+            "Média (7-10 SM)",
+            "Média-alta (10-15 SM)",
+            "Alta (15-20 SM)",
+            "Muito alta (20+ SM)"]
+
+rendas_familiares_reordenadas = [rf for rf in ordem_rf if rf in rendas_familiares_disponiveis]
+
+if "rendas_familiares_selecionadas" not in st.session_state:
+    st.session_state["rendas_familiares_selecionadas"] = rendas_familiares_reordenadas.copy()
+
+rendas_familiares_selecionadas = st.sidebar.multiselect(
+    "Renda familiar mensal",
+    options=rendas_familiares_reordenadas,
+    key="rendas_familiares_selecionadas"
+)
+
+if st.sidebar.button("🔄 Resetar rendas familiares"):
+    st.session_state.pop("rendas_familiares_selecionadas")
+    st.rerun()
+
+# --- Filtro de tipo de escola --- #
+tipos_escola_disponiveis = get_tipos_escola(df)
+
+# Reordenação
+ordem_te = ["Não frequentou EM",
+            "Somente escola pública",
+            "Escola pública + privada (com bolsa)",
+            "Escola pública + privada (sem bolsa)",
+            "Somente escola privada (com bolsa)",
+            "Somente escola privada (sem bolsa)"]
+
+tipos_escola_reordenados = [te for te in ordem_te if te in tipos_escola_disponiveis]
+
+if "tipos_escola_selecionados" not in st.session_state:
+    st.session_state["tipos_escola_selecionados"] = tipos_escola_reordenados.copy()
+
+tipos_escola_selecionados = st.sidebar.multiselect(
+    "Tipo de escola - Ensino médio",
+    options=tipos_escola_reordenados,
+    key="tipos_escola_selecionados"
+)
+
+if st.sidebar.button("🔄 Resetar tipos de escola"):
+    st.session_state.pop("tipos_escola_selecionados")
+    st.rerun()
+
 # --- Aplicando filtros no DataFrame --- #
 df_filtrado = df[
     (df['uf_prova'].isin(ufs_selecionadas)) &
@@ -248,7 +310,9 @@ df_filtrado = df[
     (df['estado_civil_labels'].isin(estados_civis_selecionados)) &
     (df['cor_raca_labels'].isin(cores_racas_selecionadas)) &
     (df['escolaridade_pai_labels'].isin(escolaridades_pais_selecionadas)) &
-    (df['escolaridade_mae_labels'].isin(escolaridades_maes_selecionadas))
+    (df['escolaridade_mae_labels'].isin(escolaridades_maes_selecionadas)) &
+    (df['renda_familiar_labels'].isin(rendas_familiares_selecionadas)) &
+    (df['tipo_escola_em_labels'].isin(tipos_escola_selecionados))
 ]
 
 # --- Página principal --- #
