@@ -387,19 +387,28 @@ st.subheader("Métricas gerais")
 st.markdown("Médias das notas obtidas em cada uma das 5 áreas avaliadas, além da média da somatória dessas mesmas notas.")
 
 if not df_filtrado.empty:
+    # Cria a coluna com a média da somatória das notas
+    df_filtrado["nota_somatoria"] = df_filtrado[[
+        "nota_redacao",
+        "nota_ciencias_natureza",
+        "nota_ciencias_humanas",
+        "nota_matematica",
+        "nota_linguagens_codigos"
+    ]].mean(axis=1)
+
     total_inscritos = df_filtrado.shape[0]
     media_natureza = df_filtrado["nota_ciencias_natureza"].mean()
     media_humanas = df_filtrado["nota_ciencias_humanas"].mean()
     media_linguagens = df_filtrado["nota_linguagens_codigos"].mean()
     media_matematica = df_filtrado["nota_matematica"].mean()
     media_redacao = df_filtrado["nota_redacao"].mean()
-    media_somatoria = df_filtrado[["nota_redacao", "nota_ciencias_natureza", "nota_ciencias_humanas", "nota_matematica", "nota_linguagens_codigos"]].mean(axis=1).mean()
+    media_somatoria = df_filtrado["nota_somatoria"].mean()
     maxima_natureza = df_filtrado["nota_ciencias_natureza"].max()
     maxima_humanas = df_filtrado["nota_ciencias_humanas"].max()
     maxima_linguagens = df_filtrado["nota_linguagens_codigos"].max()
     maxima_matematica = df_filtrado["nota_matematica"].max()
     maxima_redacao = df_filtrado["nota_redacao"].max()
-    maxima_somatoria = df_filtrado[["nota_redacao", "nota_ciencias_natureza", "nota_ciencias_humanas", "nota_matematica", "nota_linguagens_codigos"]].mean(axis=1).max() 
+    maxima_somatoria = df_filtrado["nota_somatoria"].max() 
 else:
     total_inscritos = 0
     media_natureza, media_humanas, media_linguagens, media_matematica, media_redacao, media_somatoria = 0, 0, 0, 0, 0, 0
@@ -555,3 +564,179 @@ with col_graf4:
         st.plotly_chart(grafico_tipo_escola, use_container_width=True)
     else:
         st.warning("Nenhum dado para ser exibido no gráfico com a proporção entre os tipos de escola em que os estudantes frequentaram no Ensino Médio. Cheque os filtros.")
+
+col_graf5, col_graf6, col_graf7 = st.columns(3)
+
+with col_graf5:
+    if not df_filtrado.empty:
+        grafico_hist_natureza = px.histogram(
+            df_filtrado,
+            x='nota_ciencias_natureza',
+            nbins=30,
+            title='Distribuição das notas - Ciências da Natureza',
+            labels={'nota_ciencias_natureza': 'Notas - Ciências da Natureza'}
+        )
+        grafico_hist_natureza.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_natureza.update_traces(
+            marker_color="green"
+        )
+        st.plotly_chart(grafico_hist_natureza, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Ciências da Natureza. Cheque os filtros.")
+
+with col_graf6:
+    if not df_filtrado.empty:
+        grafico_hist_humanas = px.histogram(
+            df_filtrado,
+            x='nota_ciencias_humanas',
+            nbins=30,
+            title='Distribuição das notas - Ciências Humanas',
+            labels={'nota_ciencias_humanas': 'Notas - Ciências Humanas', 'count': 'Quantidade'}
+        )
+        grafico_hist_humanas.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_humanas.update_traces(
+            marker_color="red"
+        )
+        st.plotly_chart(grafico_hist_humanas, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Ciências Humanas. Cheque os filtros.")
+
+with col_graf7:
+    if not df_filtrado.empty:
+        grafico_hist_linguagens = px.histogram(
+            df_filtrado,
+            x='nota_linguagens_codigos',
+            nbins=30,
+            title='Distribuição das notas - Linguagens e Códigos',
+            labels={'nota_linguagens_codigos': 'Notas - Linguagens e Códigos'}
+        )
+        grafico_hist_linguagens.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_linguagens.update_traces(
+            marker_color="blue"
+        )
+        st.plotly_chart(grafico_hist_linguagens, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Linguagens e Códigos. Cheque os filtros.")
+
+col_graf8, col_graf9, col_graf10 = st.columns(3)
+st.markdown("---")
+
+with col_graf8:
+    if not df_filtrado.empty:
+        grafico_hist_matematica = px.histogram(
+            df_filtrado,
+            x='nota_matematica',
+            nbins=30,
+            title='Distribuição das notas - Matemática',
+            labels={'nota_matematica': 'Notas - Matemática'}
+        )
+        grafico_hist_matematica.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_matematica.update_traces(
+            marker_color="yellow"
+        )
+        st.plotly_chart(grafico_hist_matematica, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Matemática. Cheque os filtros.")
+
+with col_graf9:
+    if not df_filtrado.empty:
+        grafico_hist_redacao = px.histogram(
+            df_filtrado,
+            x='nota_redacao',
+            nbins=30,
+            title='Distribuição das notas - Redação',
+            labels={'nota_redacao': 'Notas - Redação'}
+        )
+        grafico_hist_redacao.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_redacao.update_traces(
+            marker_color="purple"
+        )
+        st.plotly_chart(grafico_hist_redacao, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Redação. Cheque os filtros.")
+
+with col_graf10:
+    if not df_filtrado.empty:
+        grafico_hist_somatoria = px.histogram(
+            df_filtrado,
+            x='nota_somatoria',
+            nbins=30,
+            title='Distribuição das notas - Média da Somatória',
+            labels={'nota_somatoria': 'Notas - Média da Somatória'}
+        )
+        grafico_hist_somatoria.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_somatoria.update_traces(
+            marker_color="orange"
+        )
+        st.plotly_chart(grafico_hist_somatoria, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pela média da somatória das notas de todas as provas. Cheque os filtros.")
+
+col_graf11, col_graf12, col_graf13 = st.columns(3)
+
+with col_graf11:
+    if not df_filtrado.empty:
+        faixa_etaria_contagem = df_filtrado['faixa_etaria_labels'].value_counts().reset_index()
+        faixa_etaria_contagem.columns = ['faixa_etaria', 'quantidade']
+
+        grafico_bar_faixa_etaria = px.bar(
+            faixa_etaria_contagem,
+            x="quantidade",
+            y="faixa_etaria",
+            orientation="h",
+            title="Distribuição por Faixa Etária",
+            color="faixa_etaria"
+        )
+        st.plotly_chart(grafico_bar_faixa_etaria, use_container_width=True)
+
+with col_graf12:
+    if not df_filtrado.empty:
+        pais_maes = df_filtrado.melt(
+            value_vars=["escolaridade_pai_labels", "escolaridade_mae_labels"],
+            var_name="origem",
+            value_name="escolaridade"
+        )
+
+        fig = px.histogram(
+            pais_maes,
+            x="escolaridade",
+            color="origem",
+            barmode="group",
+            title="Escolaridade do Pai e da Mãe"
+        )
+        fig.update_xaxes(title="Escolaridade", tickangle=45)
+        fig.update_yaxes(title="Quantidade")
+        st.plotly_chart(fig, use_container_width=True)
+
+with col_graf13:
+    if not df_filtrado.empty:
+        renda_contagem = df_filtrado['renda_familiar_labels'].value_counts().reset_index()
+        renda_contagem.columns = ['renda', 'quantidade']
+
+        fig = px.bar(
+            renda_contagem,
+            x="renda",
+            y="quantidade",
+            title="Distribuição por Renda Familiar",
+            color="renda"
+        )
+        fig.update_xaxes(tickangle=45)
+        st.plotly_chart(fig, use_container_width=True)
