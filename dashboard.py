@@ -691,6 +691,7 @@ with col_graf10:
         st.warning("Nenhum dado para ser exibido no gráfico de distribuição pela média da somatória das notas de todas as provas. Cheque os filtros.")
 
 col_graf11, col_graf12, col_graf13 = st.columns(3)
+st.markdown("---")
 
 with col_graf11:
     if not df_filtrado.empty:
@@ -740,3 +741,4 @@ with col_graf13:
         )
         fig.update_xaxes(tickangle=45)
         st.plotly_chart(fig, use_container_width=True)
+
