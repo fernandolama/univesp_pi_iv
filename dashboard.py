@@ -439,7 +439,6 @@ st.subheader("Visualizações gráficas")
 st.markdown("Abaixo, encontram-se gráficos que fixam, de acordo com os filtros aplicados, proporções entre aspectos sociais dos estudantes, tais como (i) sexos, (ii) cores/raças, (iii) estados civis e (iv) tipos de escola em que eles frequentaram no Ensino Médio.")
 
 col_graf1, col_graf2 = st.columns(2)
-st.markdown("---")
 
 with col_graf1:
     if not df_filtrado.empty:
@@ -458,9 +457,12 @@ with col_graf1:
             }
         )
         grafico_sexo.update_traces(textinfo='percent+label')
+        grafico_sexo.update_layout(
+            showlegend=False
+        )
         st.plotly_chart(grafico_sexo, use_container_width=True)
     else:
-        st.warning("Nenhum dado para ser exibido no gráfico com a proporção entre os sexos dos estudantes. Cheque os filtros.")
+        st.warning("Nenhum dado para ser exibido nos gráficos. Cheque os filtros.")
 
 with col_graf2:
     if not df_filtrado.empty:
@@ -486,9 +488,10 @@ with col_graf2:
         grafico_cor_raca.update_traces(
             textinfo='percent+label',
         )
+        grafico_cor_raca.update_layout(
+            showlegend=False
+        )
         st.plotly_chart(grafico_cor_raca, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico com a proporção entre as cores/raças dos estudantes. Cheque os filtros.")
 
 col_graf3, col_graf4 = st.columns(2)
 st.markdown("---")
@@ -518,9 +521,10 @@ with col_graf3:
         grafico_estado_civil.update_traces(
             textinfo='percent+label',
         )
+        grafico_estado_civil.update_layout(
+            showlegend=False
+        )
         st.plotly_chart(grafico_estado_civil, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico com a proporção entre os estados civis dos estudantes. Cheque os filtros.")
 
 with col_graf4:
     if not df_filtrado.empty:
@@ -561,19 +565,117 @@ with col_graf4:
         grafico_tipo_escola.update_traces(
             textinfo='percent+label',
         )
+        grafico_tipo_escola.update_layout(
+            showlegend=False
+        )
         st.plotly_chart(grafico_tipo_escola, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico com a proporção entre os tipos de escola em que os estudantes frequentaram no Ensino Médio. Cheque os filtros.")
 
+st.markdown("Abaixo, encontram-se gráficos que fixam, de acordo com os filtros aplicados, distribuições por aspectos sociais dos estudantes, tais como (i) faixas etárias, (ii) escolaridades dos pais e (iii) faixas de renda familiar.")
 col_graf5, col_graf6, col_graf7 = st.columns(3)
+st.markdown("---")
 
 with col_graf5:
+    if not df_filtrado.empty:
+        faixa_etaria_contagem = df_filtrado['faixa_etaria_labels'].value_counts().reset_index()
+        faixa_etaria_contagem.columns = ['Faixa etária', 'Quantidade']
+
+        grafico_bar_faixa_etaria = px.bar(
+            faixa_etaria_contagem,
+            x="Quantidade",
+            y="Faixa etária",
+            orientation="h",
+            title="Distribuição por Faixa Etária",
+            color="Faixa etária"
+        )
+        grafico_bar_faixa_etaria.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(grafico_bar_faixa_etaria, use_container_width=True)
+
+with col_graf6:
+    if not df_filtrado.empty:
+        pais_maes = df_filtrado.melt(
+            value_vars=["escolaridade_pai_labels", "escolaridade_mae_labels"],
+            var_name="Origem",
+            value_name="escolaridade"
+        )
+
+        # Simplificar os rótulos "Pai" e "Mãe"
+        pais_maes["Origem"] = pais_maes["Origem"].map({
+            "escolaridade_pai_labels": "Pai",
+            "escolaridade_mae_labels": "Mãe"
+        })
+
+        # Mapa para simplificar as categorias de escolaridade
+        mapa_escolaridade = {
+            "Nunca estudou": "Nunca estudou",
+            "Fundamental I incompleto": "Fund. I inc.",
+            "Fundamental I completo, mas não Fundamental II": "Fund. I comp.",
+            "Fundamental II completo, mas não Médio": "Fund. II comp.",
+            "Médio completo": "Médio comp.",
+            "Superior completo": "Superior comp.",
+            "Pós-graduação": "Pós-grad.",
+            "Não sei": "Não sei"
+        }
+
+        pais_maes["escolaridade_simplificada"] = (
+            pais_maes["escolaridade"].map(mapa_escolaridade).fillna(pais_maes["escolaridade"])
+        )
+
+        ordem_escolaridade = [
+            "Nunca estudou", "Fund. I inc.",
+            "Fund. I comp.", "Fund. II comp.",
+            "Médio comp.", "Superior comp.",
+            "Pós-grad.", "Não sei"
+        ]
+
+        grafico_pais_maes = px.histogram(
+            pais_maes,
+            x="escolaridade_simplificada",
+            color="Origem",
+            barmode="group",
+            title="Escolaridade do Pai e da Mãe",
+            category_orders={"escolaridade_simplificada": ordem_escolaridade},
+            color_discrete_map={
+                "Pai": "blue",
+                "Mãe": "red"
+            }
+        )
+
+        grafico_pais_maes.update_xaxes(title="Escolaridade", tickangle=45)
+        grafico_pais_maes.update_yaxes(title="Quantidade")
+        st.plotly_chart(grafico_pais_maes, use_container_width=True)
+
+
+with col_graf7:
+    if not df_filtrado.empty:
+        renda_contagem = df_filtrado['renda_familiar_labels'].value_counts().reset_index()
+        renda_contagem.columns = ['Renda', 'Quantidade']
+
+        renda_grafico_bar = px.bar(
+            renda_contagem,
+            x="Quantidade",
+            y="Renda",
+            orientation="h",
+            title="Distribuição por Renda Familiar",
+            color="Renda"
+        )
+        renda_grafico_bar.update_xaxes(tickangle=45)
+        renda_grafico_bar.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(renda_grafico_bar, use_container_width=True)
+
+st.markdown("Abaixo, encontram-se gráficos que fixam, de acordo com os filtros aplicados, as distribuições da pontuação dos estudantes em cada uma das 5 áreas avaliadas, além da distribuição da média da somatória das 5 notas obtidas.")
+col_graf8, col_graf9, col_graf10 = st.columns(3)
+
+with col_graf8:
     if not df_filtrado.empty:
         grafico_hist_natureza = px.histogram(
             df_filtrado,
             x='nota_ciencias_natureza',
             nbins=30,
-            title='Distribuição das notas - Ciências da Natureza',
+            title='Distribuição - Ciências da Natureza',
             labels={'nota_ciencias_natureza': 'Notas - Ciências da Natureza'}
         )
         grafico_hist_natureza.update_layout(
@@ -584,17 +686,15 @@ with col_graf5:
             marker_color="green"
         )
         st.plotly_chart(grafico_hist_natureza, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Ciências da Natureza. Cheque os filtros.")
 
-with col_graf6:
+with col_graf9:
     if not df_filtrado.empty:
         grafico_hist_humanas = px.histogram(
             df_filtrado,
             x='nota_ciencias_humanas',
             nbins=30,
-            title='Distribuição das notas - Ciências Humanas',
-            labels={'nota_ciencias_humanas': 'Notas - Ciências Humanas', 'count': 'Quantidade'}
+            title='Distribuição - Ciências Humanas',
+            labels={'nota_ciencias_humanas': 'Notas - Ciências Humanas'}
         )
         grafico_hist_humanas.update_layout(
             yaxis_title="Quantidade",
@@ -604,16 +704,14 @@ with col_graf6:
             marker_color="red"
         )
         st.plotly_chart(grafico_hist_humanas, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Ciências Humanas. Cheque os filtros.")
 
-with col_graf7:
+with col_graf10:
     if not df_filtrado.empty:
         grafico_hist_linguagens = px.histogram(
             df_filtrado,
             x='nota_linguagens_codigos',
             nbins=30,
-            title='Distribuição das notas - Linguagens e Códigos',
+            title='Distribuição - Linguagens e Códigos',
             labels={'nota_linguagens_codigos': 'Notas - Linguagens e Códigos'}
         )
         grafico_hist_linguagens.update_layout(
@@ -624,19 +722,17 @@ with col_graf7:
             marker_color="blue"
         )
         st.plotly_chart(grafico_hist_linguagens, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Linguagens e Códigos. Cheque os filtros.")
 
-col_graf8, col_graf9, col_graf10 = st.columns(3)
+col_graf11, col_graf12, col_graf13 = st.columns(3)
 st.markdown("---")
 
-with col_graf8:
+with col_graf11:
     if not df_filtrado.empty:
         grafico_hist_matematica = px.histogram(
             df_filtrado,
             x='nota_matematica',
             nbins=30,
-            title='Distribuição das notas - Matemática',
+            title='Distribuição - Matemática',
             labels={'nota_matematica': 'Notas - Matemática'}
         )
         grafico_hist_matematica.update_layout(
@@ -647,16 +743,14 @@ with col_graf8:
             marker_color="yellow"
         )
         st.plotly_chart(grafico_hist_matematica, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Matemática. Cheque os filtros.")
 
-with col_graf9:
+with col_graf12:
     if not df_filtrado.empty:
         grafico_hist_redacao = px.histogram(
             df_filtrado,
             x='nota_redacao',
             nbins=30,
-            title='Distribuição das notas - Redação',
+            title='Distribuição - Redação',
             labels={'nota_redacao': 'Notas - Redação'}
         )
         grafico_hist_redacao.update_layout(
@@ -667,16 +761,14 @@ with col_graf9:
             marker_color="purple"
         )
         st.plotly_chart(grafico_hist_redacao, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pelas notas da prova de Redação. Cheque os filtros.")
 
-with col_graf10:
+with col_graf13:
     if not df_filtrado.empty:
         grafico_hist_somatoria = px.histogram(
             df_filtrado,
             x='nota_somatoria',
             nbins=30,
-            title='Distribuição das notas - Média da Somatória',
+            title='Distribuição - Média da Somatória',
             labels={'nota_somatoria': 'Notas - Média da Somatória'}
         )
         grafico_hist_somatoria.update_layout(
@@ -687,58 +779,65 @@ with col_graf10:
             marker_color="orange"
         )
         st.plotly_chart(grafico_hist_somatoria, use_container_width=True)
-    else:
-        st.warning("Nenhum dado para ser exibido no gráfico de distribuição pela média da somatória das notas de todas as provas. Cheque os filtros.")
 
-col_graf11, col_graf12, col_graf13 = st.columns(3)
-st.markdown("---")
+if len(st.session_state["municipios_visiveis"]) == 0:
+    st.markdown("Finalmente, abaixo encontram-se gráficos que fixam, de acordo com os filtros das UFs aplicados, as (i) UFs e os (ii) Municípios com as maiores médias da somatória das notas.")
+    col_graf14, col_graf15 = st.columns(2)
 
-with col_graf11:
+    with col_graf14:
+        if not df_filtrado.empty:
+            top_ufs = (
+                df_filtrado.groupby('uf_prova', as_index=False)['nota_somatoria']
+                .mean()
+                .nlargest(10, 'nota_somatoria')
+                .sort_values('nota_somatoria', ascending=True)
+            )
+
+            grafico_ufs_bar = px.bar(
+                top_ufs,
+                x='nota_somatoria',
+                y='uf_prova',
+                orientation='h',
+                color='uf_prova',
+                color_discrete_sequence=px.colors.qualitative.Light24,
+                title='Top 10 UFs por média da somatória das notas',
+                labels={'nota_somatoria': 'Média da somatória das notas', 'uf_prova': 'UF'}
+            )
+
+            grafico_ufs_bar.update_layout(
+                yaxis={'categoryorder': 'total ascending'},
+                showlegend=False
+            )
+            st.plotly_chart(grafico_ufs_bar, use_container_width=True)
+
+    col_municipios = col_graf15
+
+else:
+    st.markdown("Finalmente, abaixo encontram-se gráficos que fixam, de acordo com os filtros dos Municípios aplicados, os Municípios com as maiores médias da somatória das notas.")
+    col_municipios, = st.columns(1)
+
+with col_municipios:
     if not df_filtrado.empty:
-        faixa_etaria_contagem = df_filtrado['faixa_etaria_labels'].value_counts().reset_index()
-        faixa_etaria_contagem.columns = ['faixa_etaria', 'quantidade']
-
-        grafico_bar_faixa_etaria = px.bar(
-            faixa_etaria_contagem,
-            x="quantidade",
-            y="faixa_etaria",
-            orientation="h",
-            title="Distribuição por Faixa Etária",
-            color="faixa_etaria"
-        )
-        st.plotly_chart(grafico_bar_faixa_etaria, use_container_width=True)
-
-with col_graf12:
-    if not df_filtrado.empty:
-        pais_maes = df_filtrado.melt(
-            value_vars=["escolaridade_pai_labels", "escolaridade_mae_labels"],
-            var_name="origem",
-            value_name="escolaridade"
+        top_municipios = (
+            df_filtrado.groupby('municipio_prova', as_index=False)['nota_somatoria']
+            .mean()
+            .nlargest(10, 'nota_somatoria')
+            .sort_values('nota_somatoria', ascending=True)
         )
 
-        fig = px.histogram(
-            pais_maes,
-            x="escolaridade",
-            color="origem",
-            barmode="group",
-            title="Escolaridade do Pai e da Mãe"
+        grafico_municipios_bar = px.bar(
+            top_municipios,
+            x='nota_somatoria',
+            y='municipio_prova',
+            orientation='h',
+            color='municipio_prova',
+            color_discrete_sequence=px.colors.qualitative.Dark24_r,
+            title='Top 10 Municípios por média da somatória das notas',
+            labels={'nota_somatoria': 'Média da somatória das notas', 'municipio_prova': 'Município'}
         )
-        fig.update_xaxes(title="Escolaridade", tickangle=45)
-        fig.update_yaxes(title="Quantidade")
-        st.plotly_chart(fig, use_container_width=True)
 
-with col_graf13:
-    if not df_filtrado.empty:
-        renda_contagem = df_filtrado['renda_familiar_labels'].value_counts().reset_index()
-        renda_contagem.columns = ['renda', 'quantidade']
-
-        fig = px.bar(
-            renda_contagem,
-            x="renda",
-            y="quantidade",
-            title="Distribuição por Renda Familiar",
-            color="renda"
+        grafico_municipios_bar.update_layout(
+            yaxis={'categoryorder': 'total ascending'},
+            showlegend=False
         )
-        fig.update_xaxes(tickangle=45)
-        st.plotly_chart(fig, use_container_width=True)
-
+        st.plotly_chart(grafico_municipios_bar, use_container_width=True)
