@@ -84,37 +84,55 @@ if st.sidebar.button("🔄 Resetar Estados/DF"):
 # --- Filtro de município (dependente do(s) estado(s) selecionados(s)) --- #
 municipios_disponiveis = get_municipios(df, ufs_selecionadas)
 
-# Inicializa a lista de municípios selecionados no estado da sessão
-if "municipios_selecionados" not in st.session_state:
-    st.session_state["municipios_selecionados"] = municipios_disponiveis
+# Inicializações no session_state
+if "municipios_visiveis" not in st.session_state:
     st.session_state["municipios_visiveis"] = []
 
-# Busca por texto
+if "municipio_result_sel" not in st.session_state:
+    st.session_state["municipio_result_sel"] = []
+
+# Campo de busca
 municipio_input = st.sidebar.text_input(
     "Digite o nome do município:",
-    placeholder="Ex: São Paulo"
+    placeholder="Ex: São Paulo",
+    key="municipio_input"
 )
 
-# Filtra municípios que contenham o texto digitado
-if municipio_input:
-    municipios_filtrados = [municipio for municipio in municipios_disponiveis if municipio_input.lower() in municipio.lower()]
-    municipios_selecionados = st.sidebar.selectbox(
-        "Resultados da busca:",
-        options=municipios_filtrados
-    )
+# Filtro do município
+municipios_filtrados = []
+if st.session_state["municipio_input"]:
+    municipios_filtrados = [
+        m for m in municipios_disponiveis
+        if str(st.session_state["municipio_input"]).lower() in m.lower()
+    ]
 
-    # Botão para adicionar município sem perder os anteriores
-    if st.sidebar.button("Adicionar município"):
-        if municipios_selecionados not in st.session_state["municipios_visiveis"]:
-            st.session_state["municipios_visiveis"].append(municipios_selecionados)
+# Selectbox controlado por session_state
+st.sidebar.selectbox(
+    "Resultados da busca:",
+    options=municipios_filtrados,
+    key="municipio_result_sel"
+)
 
-    # Mostrar os municípios selecionados até agora
+# Função auxiliar para adicionar municípios à lista
+def adicionar_municipio():
+    sel = st.session_state["municipio_result_sel"]
+    if sel and sel not in st.session_state["municipios_visiveis"]:
+        st.session_state["municipios_visiveis"].append(sel)
+    
+# Função auxiliar para limpar municípios
+def limpar_municipios():
+    st.session_state["municipios_visiveis"] = []
+    st.session_state["municipio_result_sel"] = []
+    st.session_state["municipio_input"] = ""
+
+# Botões com on_click
+st.sidebar.button("Adicionar município", on_click=adicionar_municipio)
+st.sidebar.button("Limpar municípios selecionados", on_click=limpar_municipios)
+
+# Mostra municípios selecionados
+if st.session_state["municipios_visiveis"]:
     st.sidebar.write("Municípios selecionados:", st.session_state["municipios_visiveis"])
-
-    # Botão para limpar municípios
-    if st.sidebar.button("Limpar municípios selecionados"):
-        st.session_state["municipios_selecionados"] = []
-
+        
 # --- Filtro de sexo --- #
 sexos_disponiveis = get_sexos(df)
 sexos_selecionados = st.sidebar.multiselect(
@@ -302,20 +320,524 @@ if st.sidebar.button("🔄 Resetar tipos de escola"):
     st.rerun()
 
 # --- Aplicando filtros no DataFrame --- #
-df_filtrado = df[
-    (df['uf_prova'].isin(ufs_selecionadas)) &
-    (df["municipio_prova"].isin(st.session_state["municipios_selecionados"] if len(st.session_state["municipios_visiveis"]) < 1 else st.session_state["municipios_visiveis"])) &
-    (df['sexo_labels'].isin(sexos_selecionados)) &
-    (df['faixa_etaria_labels'].isin(faixas_etarias_selecionadas)) &
-    (df['estado_civil_labels'].isin(estados_civis_selecionados)) &
-    (df['cor_raca_labels'].isin(cores_racas_selecionadas)) &
-    (df['escolaridade_pai_labels'].isin(escolaridades_pais_selecionadas)) &
-    (df['escolaridade_mae_labels'].isin(escolaridades_maes_selecionadas)) &
-    (df['renda_familiar_labels'].isin(rendas_familiares_selecionadas)) &
-    (df['tipo_escola_em_labels'].isin(tipos_escola_selecionados))
-]
+def filtrar_dados(
+    df: pd.DataFrame,
+    ufs_selecionadas: List[str],
+    sexos_selecionados: List[str],
+    faixas_etarias_selecionadas: List[str],
+    estados_civis_selecionados: List[str],
+    cores_racas_selecionadas: List[str],
+    escolaridades_pais_selecionadas: List[str],
+    escolaridades_maes_selecionadas: List[str],
+    rendas_familiares_selecionadas: List[str],
+    tipos_escola_selecionados: List[str]
+):
+    """
+    Aplica filtros no DataFrame de acordo com as seleções do usuário.
+    Considera UFs obrigatoriamente e municípios apenas se existirem selecionados.
+    """
+
+    # Se houver municípios visíveis no session_state, usa eles
+    municipios_tratados = (
+        st.session_state["municipios_visiveis"]
+        if len(st.session_state["municipios_visiveis"]) > 0
+        else None
+    )
+
+    # Começa filtrando pelas UFs
+    mask = df['uf_prova'].isin(ufs_selecionadas)
+
+    # Só aplica filtro de município se houver seleção
+    if municipios_tratados:
+        if isinstance(municipios_tratados, str):
+            municipios_tratados = [municipios_tratados]
+        mask &= df["municipio_prova"].isin(municipios_tratados)
+
+    # Aplica os demais filtros
+    mask &= df['sexo_labels'].isin(sexos_selecionados)
+    mask &= df['faixa_etaria_labels'].isin(faixas_etarias_selecionadas)
+    mask &= df['estado_civil_labels'].isin(estados_civis_selecionados)
+    mask &= df['cor_raca_labels'].isin(cores_racas_selecionadas)
+    mask &= df['escolaridade_pai_labels'].isin(escolaridades_pais_selecionadas)
+    mask &= df['escolaridade_mae_labels'].isin(escolaridades_maes_selecionadas)
+    mask &= df['renda_familiar_labels'].isin(rendas_familiares_selecionadas)
+    mask &= df['tipo_escola_em_labels'].isin(tipos_escola_selecionados)
+
+    return df[mask]
+
+df_filtrado = filtrar_dados(
+    df,
+    ufs_selecionadas,
+    sexos_selecionados,
+    faixas_etarias_selecionadas,
+    estados_civis_selecionados,
+    cores_racas_selecionadas,
+    escolaridades_pais_selecionadas,
+    escolaridades_maes_selecionadas,
+    rendas_familiares_selecionadas,
+    tipos_escola_selecionados,
+)
 
 # --- Página principal --- #
 st.title(":books: Dashboard para análise dos microdados do ENEM 2024")
 st.markdown("Explore os dados dos participantes do ENEM 2024. Utilize os filtros à esquerda para refinar suas análises.")
 
+# --- Métricas gerais --- #
+st.subheader("Métricas gerais")
+st.markdown("Médias das notas obtidas em cada uma das 5 áreas avaliadas, além da média da somatória dessas mesmas notas.")
+
+if not df_filtrado.empty:
+    # Cria a coluna com a média da somatória das notas
+    df_filtrado["nota_somatoria"] = df_filtrado[[
+        "nota_redacao",
+        "nota_ciencias_natureza",
+        "nota_ciencias_humanas",
+        "nota_matematica",
+        "nota_linguagens_codigos"
+    ]].mean(axis=1)
+
+    total_inscritos = df_filtrado.shape[0]
+    media_natureza = df_filtrado["nota_ciencias_natureza"].mean()
+    media_humanas = df_filtrado["nota_ciencias_humanas"].mean()
+    media_linguagens = df_filtrado["nota_linguagens_codigos"].mean()
+    media_matematica = df_filtrado["nota_matematica"].mean()
+    media_redacao = df_filtrado["nota_redacao"].mean()
+    media_somatoria = df_filtrado["nota_somatoria"].mean()
+    maxima_natureza = df_filtrado["nota_ciencias_natureza"].max()
+    maxima_humanas = df_filtrado["nota_ciencias_humanas"].max()
+    maxima_linguagens = df_filtrado["nota_linguagens_codigos"].max()
+    maxima_matematica = df_filtrado["nota_matematica"].max()
+    maxima_redacao = df_filtrado["nota_redacao"].max()
+    maxima_somatoria = df_filtrado["nota_somatoria"].max() 
+else:
+    total_inscritos = 0
+    media_natureza, media_humanas, media_linguagens, media_matematica, media_redacao, media_somatoria = 0, 0, 0, 0, 0, 0
+    maxima_natureza, maxima_humanas, maxima_linguagens, maxima_matematica, maxima_redacao, maxima_somatoria = 0, 0, 0, 0, 0, 0
+    
+st.markdown(
+    f"<h3 style='text-align: center;'>Total de inscritos: {total_inscritos:,}".replace(",", ".") + "</h3>",
+    unsafe_allow_html=True
+)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1.metric("Ciências da Natureza - Nota média", f"{media_natureza:.1f}")
+col2.metric("Ciências Humanas - Nota média", f"{media_humanas:.1f}")
+col3.metric("Linguagens e Códigos - Nota média", f"{media_linguagens:.1f}")
+col4.metric("Matemática - Nota média", f"{media_matematica:.1f}")
+col5.metric("Redação - Nota média", f"{media_redacao:.1f}")
+col6.metric("Somatória - Nota média", f"{media_somatoria:.1f}")
+col7, col8, col9, col10, col11, col12 = st.columns(6)
+col7.metric("Ciências da Natureza - Nota máxima", f"{maxima_natureza:.1f}")
+col8.metric("Ciências Humanas - Nota máxima", f"{maxima_humanas:.1f}")
+col9.metric("Linguagens e Códigos - Nota máxima", f"{maxima_linguagens:.1f}")
+col10.metric("Matemática - Nota máxima", f"{maxima_matematica:.1f}")
+col11.metric("Redação - Nota máxima", f"{maxima_redacao:.1f}")
+col12.metric("Somatória - Nota máxima", f"{maxima_somatoria:.1f}")
+st.markdown("---")
+
+# --- Visualizações --- #
+st.subheader("Visualizações gráficas")
+st.markdown("Abaixo, encontram-se gráficos que fixam, de acordo com os filtros aplicados, proporções entre aspectos sociais dos estudantes, tais como (i) sexos, (ii) cores/raças, (iii) estados civis e (iv) tipos de escola em que eles frequentaram no Ensino Médio.")
+
+col_graf1, col_graf2 = st.columns(2)
+
+with col_graf1:
+    if not df_filtrado.empty:
+        sexo_contagem = df_filtrado['sexo_labels'].value_counts().reset_index()
+        sexo_contagem.columns = ['sexo', 'quantidade']
+        grafico_sexo = px.pie(
+            sexo_contagem,
+            names='sexo',
+            values='quantidade',
+            title='Sexos',
+            hole=0.4,
+            color='sexo',
+            color_discrete_map={
+                "Masculino": "blue",
+                "Feminino": "red"
+            }
+        )
+        grafico_sexo.update_traces(textinfo='percent+label')
+        grafico_sexo.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(grafico_sexo, use_container_width=True)
+    else:
+        st.warning("Nenhum dado para ser exibido nos gráficos. Cheque os filtros.")
+
+with col_graf2:
+    if not df_filtrado.empty:
+        cor_raca_contagem = df_filtrado['cor_raca_labels'].value_counts().reset_index()
+        cor_raca_contagem.columns = ['cor_raca', 'quantidade']
+        grafico_cor_raca = px.pie(
+            cor_raca_contagem,
+            names='cor_raca',
+            values='quantidade',
+            title='Cores/raças',
+            hole=0.4,
+            color='cor_raca',
+            color_discrete_map={
+                "Não declarado": "grey",
+                "Branca": "#e6e6e6ed",
+                "Preta": "black",
+                "Parda": "peru",
+                "Amarela": "yellow",
+                "Indígena": "red",
+                "Não dispõe da informação": "green"
+            }
+        )
+        grafico_cor_raca.update_traces(
+            textinfo='percent+label',
+        )
+        grafico_cor_raca.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(grafico_cor_raca, use_container_width=True)
+
+col_graf3, col_graf4 = st.columns(2)
+st.markdown("---")
+
+with col_graf3:
+    if not df_filtrado.empty:
+        estado_civil_contagem = df_filtrado['estado_civil_labels'].value_counts().reset_index()
+        estado_civil_contagem.columns = ['estado_civil', 'quantidade']
+        
+        estado_civil_contagem["estado_civil_simplificado"] = estado_civil_contagem["estado_civil"].str.split("/").str[0]
+        
+        grafico_estado_civil = px.pie(
+            estado_civil_contagem,
+            names='estado_civil_simplificado',
+            values='quantidade',
+            title='Estados civis',
+            hole=0.4,
+            color='estado_civil_simplificado',
+            color_discrete_map={
+                "Não informado": "grey",
+                "Solteiro(a)": "orange",
+                "Casado(a)": "lightpink",
+                "Divorciado(a)": "blue",
+                "Viúvo(a)": "purple"
+            }
+        )
+        grafico_estado_civil.update_traces(
+            textinfo='percent+label',
+        )
+        grafico_estado_civil.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(grafico_estado_civil, use_container_width=True)
+
+with col_graf4:
+    if not df_filtrado.empty:
+        tipo_escola_contagem = df_filtrado['tipo_escola_em_labels'].value_counts().reset_index()
+        tipo_escola_contagem.columns = ['tipo_escola', 'quantidade']
+        
+        mapa_simplificado = {
+            "Não frequentou EM": "Não frequentou",
+            "Somente escola pública": "Apenas pública",
+            "Somente escola privada (sem bolsa)": "Privada s/ bolsa",
+            "Somente escola privada (com bolsa)": "Privada c/ bolsa",
+            "Escola pública + privada (sem bolsa)": "Mista s/ bolsa",
+            "Escola pública + privada (com bolsa)": "Mista c/ bolsa"
+        }
+
+        tipo_escola_contagem["tipo_escola_simplificado"] = (
+            tipo_escola_contagem["tipo_escola"]
+            .map(mapa_simplificado)
+            .fillna(tipo_escola_contagem["tipo_escola"])
+        )
+
+        grafico_tipo_escola = px.pie(
+            tipo_escola_contagem,
+            names='tipo_escola_simplificado',
+            values='quantidade',
+            title='Tipos de escola - Ensino Médio',
+            hole=0.4,
+            color='tipo_escola',
+            color_discrete_map={
+                "Não frequentou EM": "grey",
+                "Somente escola pública": "red",
+                "Escola pública + privada (com bolsa)": "lightblue",
+                "Escola pública + privada (sem bolsa)": "blue",
+                "Somente escola privada (com bolsa)": "lightgreen",
+                "Somente escola privada (sem bolsa)": "darkgreen"
+            }
+        )
+        grafico_tipo_escola.update_traces(
+            textinfo='percent+label',
+        )
+        grafico_tipo_escola.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(grafico_tipo_escola, use_container_width=True)
+
+st.markdown("Abaixo, encontram-se gráficos que fixam, de acordo com os filtros aplicados, distribuições por aspectos sociais dos estudantes, tais como (i) faixas etárias, (ii) escolaridades dos pais e (iii) faixas de renda familiar.")
+col_graf5, col_graf6, col_graf7 = st.columns(3)
+st.markdown("---")
+
+with col_graf5:
+    if not df_filtrado.empty:
+        faixa_etaria_contagem = df_filtrado['faixa_etaria_labels'].value_counts().reset_index()
+        faixa_etaria_contagem.columns = ['Faixa etária', 'Quantidade']
+
+        grafico_bar_faixa_etaria = px.bar(
+            faixa_etaria_contagem,
+            x="Quantidade",
+            y="Faixa etária",
+            orientation="h",
+            title="Distribuição por Faixa Etária",
+            color="Faixa etária"
+        )
+        grafico_bar_faixa_etaria.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(grafico_bar_faixa_etaria, use_container_width=True)
+
+with col_graf6:
+    if not df_filtrado.empty:
+        pais_maes = df_filtrado.melt(
+            value_vars=["escolaridade_pai_labels", "escolaridade_mae_labels"],
+            var_name="Origem",
+            value_name="escolaridade"
+        )
+
+        # Simplificar os rótulos "Pai" e "Mãe"
+        pais_maes["Origem"] = pais_maes["Origem"].map({
+            "escolaridade_pai_labels": "Pai",
+            "escolaridade_mae_labels": "Mãe"
+        })
+
+        # Mapa para simplificar as categorias de escolaridade
+        mapa_escolaridade = {
+            "Nunca estudou": "Nunca estudou",
+            "Fundamental I incompleto": "Fund. I inc.",
+            "Fundamental I completo, mas não Fundamental II": "Fund. I comp.",
+            "Fundamental II completo, mas não Médio": "Fund. II comp.",
+            "Médio completo": "Médio comp.",
+            "Superior completo": "Superior comp.",
+            "Pós-graduação": "Pós-grad.",
+            "Não sei": "Não sei"
+        }
+
+        pais_maes["escolaridade_simplificada"] = (
+            pais_maes["escolaridade"].map(mapa_escolaridade).fillna(pais_maes["escolaridade"])
+        )
+
+        ordem_escolaridade = [
+            "Nunca estudou", "Fund. I inc.",
+            "Fund. I comp.", "Fund. II comp.",
+            "Médio comp.", "Superior comp.",
+            "Pós-grad.", "Não sei"
+        ]
+
+        grafico_pais_maes = px.histogram(
+            pais_maes,
+            x="escolaridade_simplificada",
+            color="Origem",
+            barmode="group",
+            title="Escolaridade do Pai e da Mãe",
+            category_orders={"escolaridade_simplificada": ordem_escolaridade},
+            color_discrete_map={
+                "Pai": "blue",
+                "Mãe": "red"
+            }
+        )
+
+        grafico_pais_maes.update_xaxes(title="Escolaridade", tickangle=45)
+        grafico_pais_maes.update_yaxes(title="Quantidade")
+        st.plotly_chart(grafico_pais_maes, use_container_width=True)
+
+
+with col_graf7:
+    if not df_filtrado.empty:
+        renda_contagem = df_filtrado['renda_familiar_labels'].value_counts().reset_index()
+        renda_contagem.columns = ['Renda', 'Quantidade']
+
+        renda_grafico_bar = px.bar(
+            renda_contagem,
+            x="Quantidade",
+            y="Renda",
+            orientation="h",
+            title="Distribuição por Renda Familiar",
+            color="Renda"
+        )
+        renda_grafico_bar.update_xaxes(tickangle=45)
+        renda_grafico_bar.update_layout(
+            showlegend=False
+        )
+        st.plotly_chart(renda_grafico_bar, use_container_width=True)
+
+st.markdown("Abaixo, encontram-se gráficos que fixam, de acordo com os filtros aplicados, as distribuições da pontuação dos estudantes em cada uma das 5 áreas avaliadas, além da distribuição da média da somatória das 5 notas obtidas.")
+col_graf8, col_graf9, col_graf10 = st.columns(3)
+
+with col_graf8:
+    if not df_filtrado.empty:
+        grafico_hist_natureza = px.histogram(
+            df_filtrado,
+            x='nota_ciencias_natureza',
+            nbins=30,
+            title='Distribuição - Ciências da Natureza',
+            labels={'nota_ciencias_natureza': 'Notas - Ciências da Natureza'}
+        )
+        grafico_hist_natureza.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_natureza.update_traces(
+            marker_color="green"
+        )
+        st.plotly_chart(grafico_hist_natureza, use_container_width=True)
+
+with col_graf9:
+    if not df_filtrado.empty:
+        grafico_hist_humanas = px.histogram(
+            df_filtrado,
+            x='nota_ciencias_humanas',
+            nbins=30,
+            title='Distribuição - Ciências Humanas',
+            labels={'nota_ciencias_humanas': 'Notas - Ciências Humanas'}
+        )
+        grafico_hist_humanas.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_humanas.update_traces(
+            marker_color="red"
+        )
+        st.plotly_chart(grafico_hist_humanas, use_container_width=True)
+
+with col_graf10:
+    if not df_filtrado.empty:
+        grafico_hist_linguagens = px.histogram(
+            df_filtrado,
+            x='nota_linguagens_codigos',
+            nbins=30,
+            title='Distribuição - Linguagens e Códigos',
+            labels={'nota_linguagens_codigos': 'Notas - Linguagens e Códigos'}
+        )
+        grafico_hist_linguagens.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_linguagens.update_traces(
+            marker_color="blue"
+        )
+        st.plotly_chart(grafico_hist_linguagens, use_container_width=True)
+
+col_graf11, col_graf12, col_graf13 = st.columns(3)
+st.markdown("---")
+
+with col_graf11:
+    if not df_filtrado.empty:
+        grafico_hist_matematica = px.histogram(
+            df_filtrado,
+            x='nota_matematica',
+            nbins=30,
+            title='Distribuição - Matemática',
+            labels={'nota_matematica': 'Notas - Matemática'}
+        )
+        grafico_hist_matematica.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_matematica.update_traces(
+            marker_color="yellow"
+        )
+        st.plotly_chart(grafico_hist_matematica, use_container_width=True)
+
+with col_graf12:
+    if not df_filtrado.empty:
+        grafico_hist_redacao = px.histogram(
+            df_filtrado,
+            x='nota_redacao',
+            nbins=30,
+            title='Distribuição - Redação',
+            labels={'nota_redacao': 'Notas - Redação'}
+        )
+        grafico_hist_redacao.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_redacao.update_traces(
+            marker_color="purple"
+        )
+        st.plotly_chart(grafico_hist_redacao, use_container_width=True)
+
+with col_graf13:
+    if not df_filtrado.empty:
+        grafico_hist_somatoria = px.histogram(
+            df_filtrado,
+            x='nota_somatoria',
+            nbins=30,
+            title='Distribuição - Média da Somatória',
+            labels={'nota_somatoria': 'Notas - Média da Somatória'}
+        )
+        grafico_hist_somatoria.update_layout(
+            yaxis_title="Quantidade",
+            title_x=0.1
+        )
+        grafico_hist_somatoria.update_traces(
+            marker_color="orange"
+        )
+        st.plotly_chart(grafico_hist_somatoria, use_container_width=True)
+
+if len(st.session_state["municipios_visiveis"]) == 0:
+    st.markdown("Finalmente, abaixo encontram-se gráficos que fixam, de acordo com os filtros das UFs aplicados, as (i) UFs e os (ii) Municípios com as maiores médias da somatória das notas.")
+    col_graf14, col_graf15 = st.columns(2)
+
+    with col_graf14:
+        if not df_filtrado.empty:
+            top_ufs = (
+                df_filtrado.groupby('uf_prova', as_index=False)['nota_somatoria']
+                .mean()
+                .nlargest(10, 'nota_somatoria')
+                .sort_values('nota_somatoria', ascending=True)
+            )
+
+            grafico_ufs_bar = px.bar(
+                top_ufs,
+                x='nota_somatoria',
+                y='uf_prova',
+                orientation='h',
+                color='uf_prova',
+                color_discrete_sequence=px.colors.qualitative.Light24,
+                title='Top 10 UFs por média da somatória das notas',
+                labels={'nota_somatoria': 'Média da somatória das notas', 'uf_prova': 'UF'}
+            )
+
+            grafico_ufs_bar.update_layout(
+                yaxis={'categoryorder': 'total ascending'},
+                showlegend=False
+            )
+            st.plotly_chart(grafico_ufs_bar, use_container_width=True)
+
+    col_municipios = col_graf15
+
+else:
+    st.markdown("Finalmente, abaixo encontram-se gráficos que fixam, de acordo com os filtros dos Municípios aplicados, os Municípios com as maiores médias da somatória das notas.")
+    col_municipios, = st.columns(1)
+
+with col_municipios:
+    if not df_filtrado.empty:
+        top_municipios = (
+            df_filtrado.groupby('municipio_prova', as_index=False)['nota_somatoria']
+            .mean()
+            .nlargest(10, 'nota_somatoria')
+            .sort_values('nota_somatoria', ascending=True)
+        )
+
+        grafico_municipios_bar = px.bar(
+            top_municipios,
+            x='nota_somatoria',
+            y='municipio_prova',
+            orientation='h',
+            color='municipio_prova',
+            color_discrete_sequence=px.colors.qualitative.Dark24_r,
+            title='Top 10 Municípios por média da somatória das notas',
+            labels={'nota_somatoria': 'Média da somatória das notas', 'municipio_prova': 'Município'}
+        )
+
+        grafico_municipios_bar.update_layout(
+            yaxis={'categoryorder': 'total ascending'},
+            showlegend=False
+        )
+        st.plotly_chart(grafico_municipios_bar, use_container_width=True)
