@@ -14,7 +14,7 @@ st.set_page_config(
 
 # Menu lateral de navegação
 st.sidebar.title("Navegação")
-pagina = st.sidebar.radio("Ir para:", ["📊 Dados e Filtros - ENEM 2024", "🤖 Algoritmos de clusterização"])
+pagina = st.sidebar.radio("Ir para:", ["📊 Dados e Filtros - ENEM 2024", "🤖 Algoritmos de clusterização - Anglo Liceu"])
 
 # ======================
 # ABA 1 - VISÃO GERAL
@@ -389,6 +389,8 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
     )
 
     # --- Página principal --- #
+    st.markdown("Por conta do tamanho do dataset original (+ de 4 milhões de linhas), ficou impraticável trabalhar com ele em ferramentas como o GitHub e o Streamlit; como medida paliativa, extraiu-se um sample ponderado pelas UFs e pelos municípos, com 156 mil linhas.")
+    st.markdown("---")
     st.title(":books: Dashboard para análise dos microdados do ENEM 2024")
     st.markdown("Explore os dados dos participantes do ENEM 2024. Utilize os filtros à esquerda para refinar suas análises.")
 
@@ -856,5 +858,5 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
 # ABA 2 - CLUSTERIZAÇÃO
 # ======================
 
-if pagina == "🤖 Algoritmos de clusterização - Liceu Anglo":
+if pagina == "🤖 Algoritmos de clusterização - Anglo Liceu":
     clusters_anglo_liceu()
