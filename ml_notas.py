@@ -297,7 +297,7 @@ def clusters_anglo_liceu():
         st.info(
             "- Analisando as saídas do **RandomForest** e os gráficos à popósito das **Contribuições no PC1 e PC2**, temos que as notas em redação e matemática são as que mais destoam em relação à média da somatóriaa das notas, não obstante sejam as mais determinantes para o desempenho geral.\n"
             "- Ao se comparar, por exemplo, as notas de redação no eixo x e de ciências humanas no eixo y, notam-se pontos mais difusos no quadrante superior direito (notas altas e ambas as provas) e quatro pontos no quadrante superior esquerdo (notas altas no eixo y, mas baixas no eixo x)\n"
-            "- Isso indica que uma troca pedagógica etre os professores de ciências humanas e o professor de redação pode ser muito benéfica a este último."
+            "- Isso indica que uma troca pedagógica entre os professores de ciências humanas e o professor de redação pode ser muito benéfica a este último."
         )
 
     else:
