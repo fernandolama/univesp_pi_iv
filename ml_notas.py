@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor
 from minisom import MiniSom
 
-def clusters_anglo_liceu():
+def clusters_colegio_teste():
     # ========================
 
     # Carregar dataset
@@ -17,7 +17,7 @@ def clusters_anglo_liceu():
 
     @st.cache_data
     def carregar_dados():
-        df = pd.read_csv("data/notas_anglo_liceu.csv", sep=";", encoding="latin1")
+        df = pd.read_csv("data/notas_colegio_teste.csv", sep=";", encoding="latin1")
         return df
 
     df = carregar_dados()

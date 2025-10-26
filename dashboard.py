@@ -2,7 +2,7 @@ from typing import List
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from ml_notas import clusters_anglo_liceu
+from ml_notas import clusters_colegio_teste
 
 # --- Configurações da página --- #
 # Título, ícone e layout da página
@@ -14,7 +14,7 @@ st.set_page_config(
 
 # Menu lateral de navegação
 st.sidebar.title("Navegação")
-pagina = st.sidebar.radio("Ir para:", ["📊 Dados e Filtros - ENEM 2024", "🤖 Algoritmos de clusterização - Anglo Liceu"])
+pagina = st.sidebar.radio("Ir para:", ["📊 Dados e Filtros - ENEM 2024", "🤖 Algoritmos de clusterização - Colégio Teste"])
 
 # ======================
 # ABA 1 - VISÃO GERAL
@@ -858,5 +858,5 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
 # ABA 2 - CLUSTERIZAÇÃO
 # ======================
 
-if pagina == "🤖 Algoritmos de clusterização - Anglo Liceu":
-    clusters_anglo_liceu()
+if pagina == "🤖 Algoritmos de clusterização - Colégio Teste":
+    clusters_colegio_teste()
