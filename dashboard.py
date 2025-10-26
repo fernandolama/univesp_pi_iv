@@ -14,7 +14,7 @@ st.set_page_config(
 
 # Menu lateral de navegação
 st.sidebar.title("Navegação")
-pagina = st.sidebar.radio("Ir para:", ["📊 Dados e Filtros - ENEM 2024", "🤖 Algoritmos de clusterização - Anglo Liceu"])
+pagina = st.sidebar.radio("Ir para:", ["📊 Dados e Filtros - ENEM 2024", "🤖 Algoritmos de clusterização - Colégio Teste"])
 
 # ======================
 # ABA 1 - VISÃO GERAL
@@ -24,7 +24,8 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
     # --- Função cacheada para carregar os dados --- #
     @st.cache_data
     def carregar_df():
-        return pd.read_csv("data/enem_2024_dash_sample.csv", sep=";", encoding="latin1")
+        url = "https://www.dropbox.com/scl/fi/crwvedyndwelux5hydyzi/enem_2024_dash.csv?rlkey=qbuvfovdjxdlqiy7d21nty9pr&st=pr1bvb2z&dl=1"
+        return pd.read_csv(url, sep=";", encoding="latin1")
 
     # Chamada da função
     df = carregar_df()
@@ -389,8 +390,6 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
     )
 
     # --- Página principal --- #
-    st.markdown("Por conta do tamanho do dataset original (+ de 4 milhões de linhas), ficou impraticável trabalhar com ele em ferramentas como o GitHub e o Streamlit; como medida paliativa, extraiu-se um sample ponderado pelas UFs e pelos municípos, com 156 mil linhas.")
-    st.markdown("---")
     st.title(":books: Dashboard para análise dos microdados do ENEM 2024")
     st.markdown("Explore os dados dos participantes do ENEM 2024. Utilize os filtros à esquerda para refinar suas análises.")
 
@@ -858,5 +857,5 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
 # ABA 2 - CLUSTERIZAÇÃO
 # ======================
 
-if pagina == "🤖 Algoritmos de clusterização - Anglo Liceu":
+if pagina == "🤖 Algoritmos de clusterização - Colégio Teste":
     clusters_anglo_liceu()
