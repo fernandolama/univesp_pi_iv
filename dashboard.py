@@ -2,7 +2,7 @@ from typing import List
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from ml_notas import clusters_anglo_liceu
+from ml_notas import clusters_colegio_teste
 
 # --- Configurações da página --- #
 # Título, ícone e layout da página
@@ -858,4 +858,4 @@ if pagina == "📊 Dados e Filtros - ENEM 2024":
 # ======================
 
 if pagina == "🤖 Algoritmos de clusterização - Colégio Teste":
-    clusters_anglo_liceu()
+    clusters_colegio_teste()

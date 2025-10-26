@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor
 from minisom import MiniSom
 
-def clusters_anglo_liceu():
+def clusters_colegio_teste():
     # ========================
 
     # Carregar dataset
